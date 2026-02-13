@@ -110,10 +110,7 @@ export function Pager({
       const absX = Math.abs(deltaX)
       const absY = Math.abs(deltaY)
 
-      if (
-        absX < SWIPE_THRESHOLD ||
-        absX < absY * SWIPE_DIRECTION_RATIO
-      ) {
+      if (absX < SWIPE_THRESHOLD || absX < absY * SWIPE_DIRECTION_RATIO) {
         return
       }
 
