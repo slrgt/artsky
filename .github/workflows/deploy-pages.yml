@@ -1,3 +1,5 @@
+# Deploy Artsky to https://<username>.github.io/ (root URL)
+# Requires: 1) Create repo <username>/<username>.github.io  2) Add GH_PAGES_TOKEN secret
 name: Deploy to GitHub Pages
 
 on:
@@ -8,15 +10,13 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: 'pages'
   cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,30 +37,17 @@ jobs:
       - name: Compile i18n
         run: yarn intl:compile
 
-      - name: Build web for GitHub Pages
-        env:
-          GITHUB_PAGES: '1'
-          EXPO_PUBLIC_BASE_PATH: '/artsky'
+      - name: Build web for root URL (no base path)
         run: yarn build-web:gh-pages
 
       - name: Add 404.html for SPA routing
         run: cp web-build/index.html web-build/404.html
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to slrgt.github.io
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: web-build
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          personal_token: ${{ secrets.GH_PAGES_TOKEN }}
+          external_repository: slrgt/slrgt.github.io
+          publish_dir: ./web-build
+          publish_branch: main
+          force_orphan: true
