@@ -6,11 +6,16 @@ import {
   useRef,
   useState,
 } from 'react'
+import type {GestureResponderEvent} from 'react-native'
 import {View} from 'react-native'
 import {flushSync} from 'react-dom'
 
 import {s} from '#/lib/styles'
 import {atoms as a} from '#/alf'
+import {web} from '#/alf'
+
+const SWIPE_THRESHOLD = 50
+const SWIPE_DIRECTION_RATIO = 1.5 // horizontal must be this much larger than vertical
 
 export interface PagerRef {
   setPage: (index: number) => void
@@ -40,12 +45,7 @@ export function Pager({
   const [selectedPage, setSelectedPage] = useState(initialPage)
   const scrollYs = useRef<Array<number | null>>([])
   const anchorRef = useRef(null)
-
-  useImperativeHandle(ref, () => ({
-    setPage: (index: number) => {
-      onTabBarSelect(index)
-    },
-  }))
+  const touchStartRef = useRef<{x: number; y: number} | null>(null)
 
   const onTabBarSelect = useCallback(
     (index: number) => {
@@ -80,8 +80,63 @@ export function Pager({
     [selectedPage, setSelectedPage, onPageSelected],
   )
 
+  useImperativeHandle(ref, () => ({
+    setPage: (index: number) => {
+      onTabBarSelect(index)
+    },
+  }))
+
+  const onTouchStart = useCallback((e: GestureResponderEvent) => {
+    const touch = e.nativeEvent.touches[0]
+    if (touch) {
+      touchStartRef.current = {x: touch.pageX, y: touch.pageY}
+    }
+  }, [])
+
+  const onTouchEnd = useCallback(
+    (e: GestureResponderEvent) => {
+      const touch = e.nativeEvent.changedTouches[0]
+      const start = touchStartRef.current
+      touchStartRef.current = null
+
+      if (!touch || !start) return
+
+      const childArray = Children.toArray(children)
+      if (childArray.length <= 1) return
+
+      const deltaX = touch.pageX - start.x
+      const deltaY = touch.pageY - start.y
+
+      const absX = Math.abs(deltaX)
+      const absY = Math.abs(deltaY)
+
+      if (
+        absX < SWIPE_THRESHOLD ||
+        absX < absY * SWIPE_DIRECTION_RATIO
+      ) {
+        return
+      }
+
+      if (deltaX < 0) {
+        const next = Math.min(selectedPage + 1, childArray.length - 1)
+        if (next !== selectedPage) {
+          onTabBarSelect(next)
+        }
+      } else {
+        const prev = Math.max(selectedPage - 1, 0)
+        if (prev !== selectedPage) {
+          onTabBarSelect(prev)
+        }
+      }
+    },
+    [children, selectedPage, onTabBarSelect],
+  )
+
   return (
-    <View style={s.hContentRegion}>
+    <View
+      style={[s.hContentRegion, web({touchAction: 'pan-x pan-y'})]}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}>
       {renderTabBar({
         selectedPage,
         tabBarAnchor: <View ref={anchorRef} />,
