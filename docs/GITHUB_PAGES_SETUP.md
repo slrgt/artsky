@@ -28,19 +28,24 @@ To serve the app at the root URL (`https://<username>.github.io/`), follow these
 3. Name: **GH_PAGES_TOKEN**
 4. Value: paste the token from step 2
 
-## 4. Enable GitHub Pages on your user site repo
+## 4. Configure the workflow
+
+Update `.github/workflows/deploy-pages.yml` and set `external_repository` to your Pages repo (e.g. `yourname/yourname.github.io`).
+
+## 5. Trigger a deploy (adds initial content)
+
+GitHub requires content in the repo before Pages can be enabled. Run the deploy to add it:
+
+1. Push to `main` in the Artsky repo, or go to **Actions** → **Deploy to GitHub Pages** → **Run workflow**
+2. Wait for the workflow to complete
+
+This pushes the built app to your **`<username>.github.io`** repo.
+
+## 6. Enable GitHub Pages
 
 1. Go to your **`<username>.github.io`** repo: **Settings** → **Pages**
 2. Under **Build and deployment**, set **Source** to **Deploy from a branch**
 3. Branch: **main** / **(root)**
 4. Save
-
-## 5. Configure the workflow
-
-Update `.github/workflows/deploy-pages.yml` and set `external_repository` to your Pages repo (e.g. `yourname/yourname.github.io`).
-
-## 6. Trigger a deploy
-
-Push to `main` in the Artsky repo, or go to **Actions** → **Deploy to GitHub Pages** → **Run workflow**.
 
 The app will be available at **`https://<username>.github.io/`**.
