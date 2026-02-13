@@ -18,6 +18,7 @@ import {
 } from '@react-navigation/native'
 
 import {timeout} from '#/lib/async/timeout'
+import {BASE_PATH} from '#/lib/constants'
 import {useAccountSwitcher} from '#/lib/hooks/useAccountSwitcher'
 import {useColorSchemeStyle} from '#/lib/hooks/useColorSchemeStyle'
 import {useNonReactiveCallback} from '#/lib/hooks/useNonReactiveCallback'
@@ -816,7 +817,15 @@ const FlatNavigator = ({
 const LINKING = {
   // TODO figure out what we are going to use
   // note: `bluesky://` is what is used in app.config.js
-  prefixes: ['bsky://', 'bluesky://', 'https://bsky.app'],
+  // Add GitHub Pages prefix when BASE_PATH is set for subpath deployment
+  prefixes: BASE_PATH
+    ? [
+        'bsky://',
+        'bluesky://',
+        'https://bsky.app',
+        `https://slrgt.github.io${BASE_PATH}`,
+      ]
+    : ['bsky://', 'bluesky://', 'https://bsky.app'],
 
   getPathFromState(state: State) {
     // find the current node in the navigation tree
@@ -827,14 +836,21 @@ const LINKING = {
 
     // build the path
     const route = router.matchName(node.name)
-    if (typeof route === 'undefined') {
-      return '/' // default to home
-    }
-    return route.build((node.params || {}) as RouteParams)
+    const path =
+      typeof route === 'undefined'
+        ? '/'
+        : route.build((node.params || {}) as RouteParams)
+    // Prefix with BASE_PATH for subpath deployment (e.g. GitHub Pages)
+    return BASE_PATH ? `${BASE_PATH}${path === '/' ? '' : path}` : path
   },
 
   getStateFromPath(path: string) {
-    const [name, params] = router.matchPath(path)
+    // Strip BASE_PATH for subpath deployment (e.g. GitHub Pages)
+    const pathWithoutBase =
+      BASE_PATH && path.startsWith(BASE_PATH)
+        ? path.slice(BASE_PATH.length) || '/'
+        : path
+    const [name, params] = router.matchPath(pathWithoutBase)
 
     // Any time we receive a url that starts with `intent/` we want to ignore it here. It will be handled in the
     // intent handler hook. We should check for the trailing slash, because if there isn't one then it isn't a valid

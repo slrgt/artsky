@@ -17,6 +17,7 @@ import {
   isBskyDownloadUrl,
   isExternalUrl,
   linkRequiresWarning,
+  withBasePath,
 } from '#/lib/strings/url-helpers'
 import {useModalControls} from '#/state/modals'
 import {atoms as a, flatten, type TextStyleProp, useTheme, web} from '#/alf'
@@ -97,13 +98,15 @@ export function useLink({
 }) {
   const navigation = useNavigationDeduped()
   const href = useMemo(() => {
-    return typeof to === 'string'
-      ? convertBskyAppUrlIfNeeded(sanitizeUrl(to))
-      : to.screen
-        ? router.matchName(to.screen)?.build(to.params)
-        : to.href
-          ? convertBskyAppUrlIfNeeded(sanitizeUrl(to.href))
-          : undefined
+    const raw =
+      typeof to === 'string'
+        ? convertBskyAppUrlIfNeeded(sanitizeUrl(to))
+        : to.screen
+          ? router.matchName(to.screen)?.build(to.params)
+          : to.href
+            ? convertBskyAppUrlIfNeeded(sanitizeUrl(to.href))
+            : undefined
+    return raw != null && !isExternalUrl(raw) ? withBasePath(raw) : raw
   }, [to])
 
   if (!href) {

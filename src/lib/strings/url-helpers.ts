@@ -2,7 +2,7 @@ import {AtUri} from '@atproto/api'
 import psl from 'psl'
 import TLDs from 'tlds'
 
-import {BSKY_SERVICE} from '#/lib/constants'
+import {BASE_PATH, BSKY_SERVICE} from '#/lib/constants'
 import {isInvalidHandle} from '#/lib/strings/handles'
 import {startUriToStarterPackUri} from '#/lib/strings/starter-pack'
 import {logger} from '#/logger'
@@ -183,6 +183,12 @@ export function isBskyDownloadUrl(url: string): boolean {
     return false
   }
   return url === '/download' || url.startsWith('/download?')
+}
+
+/** Prefix internal path with BASE_PATH for subpath deployment (e.g. GitHub Pages) */
+export function withBasePath(path: string): string {
+  if (!BASE_PATH || !path.startsWith('/')) return path
+  return path === '/' ? BASE_PATH : `${BASE_PATH}${path}`
 }
 
 export function convertBskyAppUrlIfNeeded(url: string): string {

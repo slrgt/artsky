@@ -34,7 +34,7 @@ import {
 import {Link} from '#/view/com/util/Link'
 import {PostMeta} from '#/view/com/util/PostMeta'
 import {PreviewableUserAvatar} from '#/view/com/util/UserAvatar'
-import {atoms as a} from '#/alf'
+import {atoms as a, useTheme} from '#/alf'
 import {ContentHider} from '#/components/moderation/ContentHider'
 import {LabelsOnMyPost} from '#/components/moderation/LabelsOnMe'
 import {PostAlerts} from '#/components/moderation/PostAlerts'
@@ -89,10 +89,13 @@ export function PostFeedItem({
   isParentNotFound,
   rootPost,
   onShowLess,
+  isRead = false,
 }: FeedItemProps & {
   post: AppBskyFeedDefs.PostView
   rootPost: AppBskyFeedDefs.PostView
   onShowLess?: (interaction: AppBskyFeedDefs.Interaction) => void
+  /** Artsky: When true, post has been scrolled past (read) - shows darkened background */
+  isRead?: boolean
 }): React.ReactNode {
   const postShadowed = usePostShadow(post)
   const richText = useMemo(
@@ -128,6 +131,7 @@ export function PostFeedItem({
         isParentNotFound={isParentNotFound}
         rootPost={rootPost}
         onShowLess={onShowLess}
+        isRead={isRead}
       />
     )
   }
@@ -152,16 +156,19 @@ let FeedItemInner = ({
   isParentNotFound,
   rootPost,
   onShowLess,
+  isRead = false,
 }: FeedItemProps & {
   richText: RichTextAPI
   post: Shadow<AppBskyFeedDefs.PostView>
   rootPost: AppBskyFeedDefs.PostView
   onShowLess?: (interaction: AppBskyFeedDefs.Interaction) => void
+  isRead?: boolean
 }): React.ReactNode => {
   const ax = useAnalytics()
   const queryClient = useQueryClient()
   const {openComposer} = useOpenComposer()
   const pal = usePalette('default')
+  const t = useTheme()
 
   const [hover, setHover] = useState(false)
 
@@ -267,6 +274,8 @@ let FeedItemInner = ({
           : undefined,
       borderTopWidth:
         hideTopBorder || isThreadChild ? 0 : StyleSheet.hairlineWidth,
+      // Artsky: Darken background when post has been read (scrolled past)
+      ...(isRead && {backgroundColor: t.palette.contrast_50}),
     },
   ]
 

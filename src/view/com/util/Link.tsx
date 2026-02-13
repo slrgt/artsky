@@ -23,6 +23,7 @@ import {
   convertBskyAppUrlIfNeeded,
   isExternalUrl,
   linkRequiresWarning,
+  withBasePath,
 } from '#/lib/strings/url-helpers'
 import {type TypographyVariant} from '#/lib/ThemeContext'
 import {emitSoftReset} from '#/state/events'
@@ -279,7 +280,7 @@ export const TextLink = memo(function TextLink({
       hrefAttrs={hrefAttrs} // hack to get open in new tab to work on safari. without this, safari will open in a new window
       onPress={onPress}
       accessibilityRole="link"
-      href={convertBskyAppUrlIfNeeded(sanitizeUrl(href))}
+      href={withBasePath(convertBskyAppUrlIfNeeded(sanitizeUrl(href)))}
       {...props}>
       {text}
     </Text>

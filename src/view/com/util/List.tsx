@@ -34,6 +34,10 @@ export type ListProps<ItemT = any> = Omit<
   refreshing?: boolean
   onRefresh?: () => void
   onItemSeen?: (item: ItemT) => void
+  /** Override viewability threshold for onItemSeen (default 40). 100 = fully visible. */
+  itemVisiblePercentThreshold?: number
+  /** When to fire onItemSeen: 'enter' (default) = when item enters viewport, 'exit' = when item leaves viewport */
+  onItemSeenWhen?: 'enter' | 'exit'
   desktopFixedHeight?: number | boolean
   // Web only prop to contain the scroll to the container rather than the window
   disableFullWindowScroll?: boolean
@@ -51,6 +55,8 @@ let List = forwardRef<ListMethods, ListProps>(
       refreshing,
       onRefresh,
       onItemSeen,
+      itemVisiblePercentThreshold = 40,
+      onItemSeenWhen = 'enter',
       headerOffset,
       style,
       progressViewOffset,
@@ -119,17 +125,19 @@ let List = forwardRef<ListMethods, ListProps>(
           changed: Array<ViewToken>
         }) => {
           for (const item of info.changed) {
-            if (item.isViewable) {
+            const shouldFire =
+              onItemSeenWhen === 'exit' ? !item.isViewable : item.isViewable
+            if (shouldFire) {
               onItemSeen(item.item)
             }
           }
         },
         {
-          itemVisiblePercentThreshold: 40,
+          itemVisiblePercentThreshold,
           minimumViewTime: 0.5e3,
         },
       ]
-    }, [onItemSeen])
+    }, [onItemSeen, itemVisiblePercentThreshold, onItemSeenWhen])
 
     let refreshControl
     if (refreshing !== undefined || onRefresh !== undefined) {

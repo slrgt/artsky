@@ -117,6 +117,21 @@ export function LINK_META_PROXY(serviceUrl: string) {
 
 export const STATUS_PAGE_URL = 'https://status.bsky.app/'
 
+/**
+ * Base path for deployments under a subpath (e.g. GitHub Pages at /artsky/).
+ * Set EXPO_PUBLIC_BASE_PATH=/artsky when building for GitHub Pages.
+ */
+export const BASE_PATH =
+  (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_BASE_PATH) || ''
+
+/**
+ * Artsky: Enable the "Hide Read Posts" feature on the home feed.
+ * Posts are marked as "Read" when scrolled past in the viewport.
+ * The floating button lets users hide read posts in one tap (not a toggle).
+ * This is session-scoped and distinct from "Hide post for me" (persisted moderation).
+ */
+export const ENABLE_HIDE_READ_POSTS = true
+
 // Hitslop constants
 export const createHitslop = (size: number): Insets => ({
   top: size,

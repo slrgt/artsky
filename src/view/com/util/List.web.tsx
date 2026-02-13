@@ -31,6 +31,8 @@ export type ListProps<ItemT> = Omit<
   refreshing?: boolean
   onRefresh?: () => void
   onItemSeen?: (item: ItemT) => void
+  /** When to fire onItemSeen: 'enter' (default) = when item enters viewport, 'exit' = when item leaves viewport */
+  onItemSeenWhen?: 'enter' | 'exit'
   desktopFixedHeight?: number | boolean
   // Web only prop to contain the scroll to the container rather than the window
   disableFullWindowScroll?: boolean
@@ -66,6 +68,7 @@ function ListImpl<ItemT>(
     onScrolledDownChange,
     onContentSizeChange,
     onItemSeen,
+    onItemSeenWhen = 'enter',
     renderItem,
     extraData,
     style,
@@ -364,6 +367,7 @@ function ListImpl<ItemT>(
                     renderItem={renderItem}
                     extraData={extraData}
                     onItemSeen={onItemSeen}
+                    onItemSeenWhen={onItemSeenWhen}
                   />
                 )
               })}
@@ -442,6 +446,7 @@ let Row = function RowImpl<ItemT>({
   renderItem,
   extraData: _unused,
   onItemSeen,
+  onItemSeenWhen = 'enter',
 }: {
   item: ItemT
   index: number
@@ -451,11 +456,13 @@ let Row = function RowImpl<ItemT>({
     | ((data: {index: number; item: any; separators: any}) => React.ReactNode)
   extraData: any
   onItemSeen: ((item: any) => void) | undefined
+  onItemSeenWhen?: 'enter' | 'exit'
 }): React.ReactNode {
   const rowRef = React.useRef(null)
   const intersectionTimeout = React.useRef<
     ReturnType<typeof setTimeout> | undefined
   >(undefined)
+  const hasBeenVisibleRef = React.useRef(false)
 
   const handleIntersection = useNonReactiveCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -464,17 +471,25 @@ let Row = function RowImpl<ItemT>({
           return
         }
         entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            if (!intersectionTimeout.current) {
-              intersectionTimeout.current = setTimeout(() => {
-                intersectionTimeout.current = undefined
-                onItemSeen!(item)
-              }, ON_ITEM_SEEN_WAIT_DURATION)
+          if (onItemSeenWhen === 'exit') {
+            if (entry.isIntersecting) {
+              hasBeenVisibleRef.current = true
+            } else if (hasBeenVisibleRef.current) {
+              onItemSeen!(item)
             }
           } else {
-            if (intersectionTimeout.current) {
-              clearTimeout(intersectionTimeout.current as NodeJS.Timeout)
-              intersectionTimeout.current = undefined
+            if (entry.isIntersecting) {
+              if (!intersectionTimeout.current) {
+                intersectionTimeout.current = setTimeout(() => {
+                  intersectionTimeout.current = undefined
+                  onItemSeen!(item)
+                }, ON_ITEM_SEEN_WAIT_DURATION)
+              }
+            } else {
+              if (intersectionTimeout.current) {
+                clearTimeout(intersectionTimeout.current as NodeJS.Timeout)
+                intersectionTimeout.current = undefined
+              }
             }
           }
         })

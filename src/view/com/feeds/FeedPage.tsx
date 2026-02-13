@@ -8,12 +8,16 @@ import {
 } from 'react'
 import {View} from 'react-native'
 import {type AppBskyActorDefs, AppBskyFeedDefs} from '@atproto/api'
-import {msg} from '@lingui/macro'
+import {msg, plural} from '@lingui/macro'
 import {useLingui} from '@lingui/react'
 import {type NavigationProp, useNavigation} from '@react-navigation/native'
 import {useQueryClient} from '@tanstack/react-query'
 
-import {DISCOVER_FEED_URI, VIDEO_FEED_URIS} from '#/lib/constants'
+import {
+  DISCOVER_FEED_URI,
+  ENABLE_HIDE_READ_POSTS,
+  VIDEO_FEED_URIS,
+} from '#/lib/constants'
 import {useOpenComposer} from '#/lib/hooks/useOpenComposer'
 import {ComposeIcon2} from '#/lib/icons'
 import {getRootNavigation, getTabState, TabState} from '#/lib/routes/helpers'
@@ -37,6 +41,7 @@ import {IS_NATIVE} from '#/env'
 import {PostFeed} from '../posts/PostFeed'
 import {FAB} from '../util/fab/FAB'
 import {type ListMethods} from '../util/List'
+import {HideReadPostsBtn} from '../util/load-latest/HideReadPostsBtn'
 import {LoadLatestBtn} from '../util/load-latest/LoadLatestBtn'
 import {MainScrollProvider} from '../util/MainScrollProvider'
 
@@ -76,6 +81,13 @@ export function FeedPage({
   const scrollElRef = useRef<ListMethods>(null)
   const [hasNew, setHasNew] = useState(false)
   const setHomeBadge = useSetHomeBadge()
+
+  // Artsky: State for "Hide Read Posts" floating button (one-time action, not a toggle)
+  const [hideReadPostsState, setHideReadPostsState] = useState<{
+    showButton: boolean
+    readCount: number
+    onPress: () => void
+  } | null>(null)
   const isVideoFeed = useMemo(() => {
     const isBskyVideoFeed = VIDEO_FEED_URIS.includes(feedInfo.uri)
     const feedIsVideoMode =
@@ -161,6 +173,8 @@ export function FeedPage({
             headerOffset={headerOffset}
             savedFeedConfig={savedFeedConfig}
             isVideoFeed={isVideoFeed}
+            enableHideReadPosts={ENABLE_HIDE_READ_POSTS}
+            onHideReadPostsState={setHideReadPostsState}
           />
         </FeedFeedbackProvider>
       </MainScrollProvider>
@@ -171,6 +185,22 @@ export function FeedPage({
           showIndicator={hasNew}
         />
       )}
+
+      {/* Artsky: Hide Read Posts - one-time action to hide posts you've scrolled past */}
+      {ENABLE_HIDE_READ_POSTS &&
+        hideReadPostsState?.showButton &&
+        hideReadPostsState.readCount > 0 && (
+          <HideReadPostsBtn
+            onPress={hideReadPostsState.onPress}
+            label={_(
+              plural(hideReadPostsState.readCount, {
+                one: 'Hide 1 read post',
+                other: 'Hide # read posts',
+              }),
+            )}
+            readCount={hideReadPostsState.readCount}
+          />
+        )}
 
       {hasSession && (
         <FAB

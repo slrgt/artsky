@@ -28,7 +28,11 @@ import {useLingui} from '@lingui/react'
 import {useQueryClient} from '@tanstack/react-query'
 
 import {isStatusStillActive, isStatusValidForViewers} from '#/lib/actor-status'
-import {DISCOVER_FEED_URI, KNOWN_SHUTDOWN_FEEDS} from '#/lib/constants'
+import {
+  DISCOVER_FEED_URI,
+  ENABLE_HIDE_READ_POSTS,
+  KNOWN_SHUTDOWN_FEEDS,
+} from '#/lib/constants'
 import {useInitialNumToRender} from '#/lib/hooks/useInitialNumToRender'
 import {useNonReactiveCallback} from '#/lib/hooks/useNonReactiveCallback'
 import {isNetworkError} from '#/lib/strings/errors'
@@ -209,6 +213,8 @@ let PostFeed = ({
   savedFeedConfig,
   initialNumToRender: initialNumToRenderOverride,
   isVideoFeed = false,
+  enableHideReadPosts = false,
+  onHideReadPostsState,
 }: {
   feed: FeedDescriptor
   feedParams?: FeedParams
@@ -231,6 +237,14 @@ let PostFeed = ({
   savedFeedConfig?: AppBskyActorDefs.SavedFeed
   initialNumToRender?: number
   isVideoFeed?: boolean
+  /** Artsky: When true, track read posts and allow hiding them via floating button */
+  enableHideReadPosts?: boolean
+  /** Artsky: Called when hide-read-posts button visibility or action changes */
+  onHideReadPostsState?: (state: {
+    showButton: boolean
+    readCount: number
+    onPress: () => void
+  }) => void
 }): React.ReactNode => {
   const ax = useAnalytics()
   const {_} = useLingui()
@@ -248,6 +262,21 @@ let PostFeed = ({
   const [hasPressedShowLessUris, setHasPressedShowLessUris] = useState(
     () => new Set<string>(),
   )
+
+  // Artsky: Track posts scrolled past ("read"). Used for "Hide Read Posts" button.
+  // This is session-scoped - NOT the same as "Hide post for me" (persisted moderation).
+  const [readPostUris, setReadPostUris] = useState<Set<string>>(() => new Set())
+  // Snapshot of read posts at button press - only these get hidden (not posts read afterward)
+  const [hiddenReadPostUris, setHiddenReadPostUris] =
+    useState<Set<string> | null>(null)
+  const onHideReadPosts = useCallback(() => {
+    setReadPostUris(current => {
+      setHiddenReadPostUris(new Set(current))
+      return current
+    })
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+  }, [])
+
   const onPressShowLess = useCallback(
     (interaction: AppBskyFeedDefs.Interaction) => {
       if (interaction.item) {
@@ -682,6 +711,32 @@ let PostFeed = ({
     blockedOrMutedAuthors,
   ])
 
+  // Artsky: Filter out read posts when user has pressed "Hide Read Posts".
+  // Only hides posts that were read *at press time* - posts read afterward stay visible.
+  const filteredFeedItems = useMemo(() => {
+    if (
+      !ENABLE_HIDE_READ_POSTS ||
+      !enableHideReadPosts ||
+      !hiddenReadPostUris ||
+      hiddenReadPostUris.size === 0
+    ) {
+      return feedItems
+    }
+    return feedItems.filter(row => {
+      if (row.type === 'sliceItem') {
+        const post = row.slice.items[row.indexInSlice]?.post
+        return post && !hiddenReadPostUris!.has(post.uri)
+      }
+      if (row.type === 'videoGridRow') {
+        const hasUnread = row.items.some(
+          item => item.post && !hiddenReadPostUris!.has(item.post.uri),
+        )
+        return hasUnread
+      }
+      return true // Non-post rows (loading, interstitials, etc.) stay visible
+    })
+  }, [feedItems, enableHideReadPosts, hiddenReadPostUris])
+
   // events
   // =
 
@@ -787,6 +842,10 @@ let PostFeed = ({
         const slice = row.slice
         const indexInSlice = row.indexInSlice
         const item = slice.items[indexInSlice]
+        const isRead =
+          ENABLE_HIDE_READ_POSTS &&
+          enableHideReadPosts &&
+          readPostUris.has(item.post.uri)
         return (
           <PostFeedItem
             post={item.post}
@@ -808,6 +867,7 @@ let PostFeed = ({
             hideTopBorder={rowIndex === 0 && indexInSlice === 0}
             rootPost={slice.items[0].post}
             onShowLess={onPressShowLess}
+            isRead={isRead}
           />
         )
       } else if (row.type === 'sliceViewFullThread') {
@@ -861,6 +921,8 @@ let PostFeed = ({
       feedTab,
       feedCacheKey,
       onPressShowLess,
+      enableHideReadPosts,
+      readPostUris,
     ],
   )
 
@@ -933,6 +995,13 @@ let PostFeed = ({
         if (indexInSlice === 0 && !seenPostUrisRef.current.has(post.uri)) {
           seenPostUrisRef.current.add(post.uri)
 
+          // Artsky: Mark post as "read" when scrolled past (for Hide Read Posts feature)
+          if (ENABLE_HIDE_READ_POSTS && enableHideReadPosts) {
+            setReadPostUris(prev =>
+              prev.has(post.uri) ? prev : new Set(prev).add(post.uri),
+            )
+          }
+
           const position = getPostPosition('sliceItem', item.key)
 
           ax.metric('post:view', {
@@ -968,6 +1037,13 @@ let PostFeed = ({
           if (!seenPostUrisRef.current.has(post.uri)) {
             seenPostUrisRef.current.add(post.uri)
 
+            // Artsky: Mark post as "read" when scrolled past (for Hide Read Posts feature)
+            if (ENABLE_HIDE_READ_POSTS && enableHideReadPosts) {
+              setReadPostUris(prev =>
+                prev.has(post.uri) ? prev : new Set(prev).add(post.uri),
+              )
+            }
+
             const position = getPostPosition('videoGridRow', item.key)
 
             ax.metric('post:view', {
@@ -981,15 +1057,38 @@ let PostFeed = ({
         }
       }
     },
-    [feedFeedback, feed, liveNowConfig, getPostPosition],
+    [feedFeedback, feed, liveNowConfig, getPostPosition, enableHideReadPosts],
   )
+
+  // Artsky: Notify parent when Hide Read Posts button should show
+  useEffect(() => {
+    if (
+      !ENABLE_HIDE_READ_POSTS ||
+      !enableHideReadPosts ||
+      !onHideReadPostsState
+    ) {
+      return
+    }
+    // Button stays visible while there are read posts (doesn't hide after press)
+    const showButton = readPostUris.size > 0
+    onHideReadPostsState({
+      showButton,
+      readCount: readPostUris.size,
+      onPress: onHideReadPosts,
+    })
+  }, [
+    enableHideReadPosts,
+    onHideReadPostsState,
+    readPostUris.size,
+    onHideReadPosts,
+  ])
 
   return (
     <View testID={testID} style={style}>
       <List
         testID={testID ? `${testID}-flatlist` : undefined}
         ref={scrollElRef}
-        data={feedItems}
+        data={filteredFeedItems}
         keyExtractor={item => item.key}
         renderItem={renderItem}
         ListFooterComponent={FeedFooter}
@@ -1014,6 +1113,7 @@ let PostFeed = ({
         maxToRenderPerBatch={IS_IOS ? 5 : 1}
         updateCellsBatchingPeriod={40}
         onItemSeen={onItemSeen}
+        onItemSeenWhen="exit"
       />
     </View>
   )
