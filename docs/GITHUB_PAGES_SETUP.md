@@ -28,11 +28,7 @@ To serve the app at the root URL (`https://<username>.github.io/`), follow these
 3. Name: **GH_PAGES_TOKEN**
 4. Value: paste the token from step 2
 
-## 4. Configure the workflow
-
-Update `.github/workflows/deploy-pages.yml` and set `external_repository` to your Pages repo (e.g. `yourname/yourname.github.io`).
-
-## 5. Trigger a deploy (adds initial content)
+## 4. Trigger a deploy (adds initial content)
 
 GitHub requires content in the repo before Pages can be enabled. Run the deploy to add it:
 
@@ -41,7 +37,7 @@ GitHub requires content in the repo before Pages can be enabled. Run the deploy 
 
 This pushes the built app to your **`<username>.github.io`** repo.
 
-## 6. Enable GitHub Pages
+## 5. Enable GitHub Pages
 
 1. Go to your **`<username>.github.io`** repo: **Settings** → **Pages**
 2. Under **Build and deployment**, set **Source** to **Deploy from a branch**

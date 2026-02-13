@@ -43,11 +43,11 @@ jobs:
       - name: Add 404.html for SPA routing
         run: cp web-build/index.html web-build/404.html
 
-      - name: Deploy to slrgt.github.io
+      - name: Deploy to ${{ github.repository_owner }}.github.io
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.GH_PAGES_TOKEN }}
-          external_repository: slrgt/slrgt.github.io
+          external_repository: ${{ github.repository_owner }}/${{ github.repository_owner }}.github.io
           publish_dir: ./web-build
           publish_branch: main
           force_orphan: true
