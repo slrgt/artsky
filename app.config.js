@@ -213,6 +213,19 @@ module.exports = function (_config) {
       },
       web: {
         favicon: './assets/favicon.png',
+        name: 'Artsky',
+        shortName: 'Artsky',
+        themeColor: '#006AFF',
+        backgroundColor: '#000000',
+        display: 'standalone',
+        meta: {
+          apple: {
+            mobileWebAppCapable: true,
+            barStyle: 'black-translucent',
+          },
+        },
+        // Prefer PWA install over suggesting native Bluesky app
+        preferRelatedApplications: false,
       },
       updates: {
         url: 'https://updates.bsky.app/manifest',
