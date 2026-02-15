@@ -1,4 +1,4 @@
-# Deploy Artsky to https://<username>.github.io/
+# Deploy Purplesky to https://<username>.github.io/
 
 To serve the app at the root URL (`https://<username>.github.io/`), follow these steps:
 
@@ -23,7 +23,7 @@ To serve the app at the root URL (`https://<username>.github.io/`), follow these
 
 ## 3. Add the token as a secret
 
-1. Go to your Artsky repo: **Settings** → **Secrets and variables** → **Actions**
+1. Go to your Purplesky repo: **Settings** → **Secrets and variables** → **Actions**
 2. **New repository secret**
 3. Name: **GH_PAGES_TOKEN**
 4. Value: paste the token from step 2
@@ -32,7 +32,7 @@ To serve the app at the root URL (`https://<username>.github.io/`), follow these
 
 GitHub requires content in the repo before Pages can be enabled. Run the deploy to add it:
 
-1. Push to `main` in the Artsky repo, or go to **Actions** → **Deploy to GitHub Pages** → **Run workflow**
+1. Push to `main` in the Purplesky repo, or go to **Actions** → **Deploy to GitHub Pages** → **Run workflow**
 2. Wait for the workflow to complete
 
 This pushes the built app to your **`<username>.github.io`** repo.
