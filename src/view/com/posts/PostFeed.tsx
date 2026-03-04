@@ -934,8 +934,6 @@ let PostFeed = ({
       onPressShowLess,
       enableHideReadPosts,
       readPostUris,
-      feedColumns,
-      cardViewMode,
     ],
   )
 
@@ -1100,7 +1098,7 @@ let PostFeed = ({
   const columnItems = useMemo(() => {
     const numColumns = feedColumns === '1' ? 1 : feedColumns === '2' ? 2 : 3
     if (numColumns === 1 || filteredFeedItems.length === 0) {
-      return {columns: [filteredFeedItems]}
+      return {columns: [filteredFeedItems], numColumns: 1}
     }
 
     const columns: FeedRow[][] = Array.from({length: numColumns}, () => [])
@@ -1110,51 +1108,47 @@ let PostFeed = ({
       columns[i % numColumns].push(filteredFeedItems[i])
     }
 
-    return {columns}
+    return {columns, numColumns}
   }, [filteredFeedItems, feedColumns])
 
   // Artsky: Render a single list or multi-column masonry layout
   if (feedColumns !== '1') {
-    const renderColumn = (items: FeedRow[], columnIndex: number) => (
-      <View style={styles.masonryColumn} key={`column-${columnIndex}`}>
-        {items.map((item, index) => (
-          <View key={`col-${columnIndex}-${item.key}`}>
-            {renderItem({item, index} as ListRenderItemInfo<FeedRow>)}
-          </View>
-        ))}
-      </View>
-    )
-
+    const numColumns = columnItems.numColumns
+    
     return (
-      <View testID={testID} style={style}>
+      <View testID={testID} style={[style, {flex: 1}]}>
         <List
           testID={testID ? `${testID}-flatlist` : undefined}
           ref={scrollElRef}
-          data={[{type: 'masonry' as const, key: 'masonry-container'}]}
-          keyExtractor={() => 'masonry-container'}
-          renderItem={() => (
-            <View style={styles.masonryContainer}>
-              {columnItems.columns.map((colItems, index) =>
-                renderColumn(colItems, index),
-              )}
-            </View>
-          )}
+          data={filteredFeedItems}
+          keyExtractor={item => item.key}
+          renderItem={renderItem}
           ListFooterComponent={FeedFooter}
           ListHeaderComponent={ListHeaderComponent}
           refreshing={isPTRing}
           onRefresh={onRefresh}
           headerOffset={headerOffset}
           progressViewOffset={progressViewOffset}
+          contentContainerStyle={{
+            paddingHorizontal: 4,
+          }}
           onScrolledDownChange={onScrolledDownChange}
           onEndReached={onEndReached}
           onEndReachedThreshold={2}
-          removeClippedSubviews={false}
+          removeClippedSubviews={true}
           extraData={extraData}
-          desktopFixedHeight={false}
-          initialNumToRender={1}
+          desktopFixedHeight={
+            desktopFixedHeightOffset ? desktopFixedHeightOffset : true
+          }
+          initialNumToRender={initialNumToRenderOverride ?? initialNumToRender}
           windowSize={9}
-          maxToRenderPerBatch={1}
+          maxToRenderPerBatch={IS_IOS ? 5 : 1}
           updateCellsBatchingPeriod={40}
+          onItemSeen={onItemSeen}
+          onItemSeenWhen="exit"
+          // @ts-ignore - numColumns is a valid prop for FlatList
+          numColumns={numColumns}
+          key={`columns-${numColumns}`}
         />
       </View>
     )
@@ -1200,14 +1194,6 @@ export {PostFeed}
 
 const styles = StyleSheet.create({
   feedFooter: {paddingTop: 20},
-  masonryContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  masonryColumn: {
-    flex: 1,
-    paddingHorizontal: 4,
-  },
 })
 
 export function isThreadParentAt<T>(arr: Array<T>, i: number) {
