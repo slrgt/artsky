@@ -218,7 +218,6 @@ let PostFeed = ({
   onHideReadPostsState,
   feedColumns = '1',
   cardViewMode = 'default',
-  isMasonry = false,
 }: {
   feed: FeedDescriptor
   feedParams?: FeedParams
@@ -253,8 +252,6 @@ let PostFeed = ({
   feedColumns?: '1' | '2' | '3'
   /** Artsky: Card view mode - full cards, mini cards, or art only */
   cardViewMode?: CardViewMode
-  /** Artsky: When true, use Pinterest-style masonry layout */
-  isMasonry?: boolean
 }): React.ReactNode => {
   const ax = useAnalytics()
   const {_} = useLingui()
@@ -1099,46 +1096,23 @@ let PostFeed = ({
 
   // Artsky: Distribute feed items into columns for masonry layout
   const columnItems = useMemo(() => {
-    // For masonry layout, always use 2 columns on mobile, 3 on desktop
-    // This is handled by the isMasonry flag
-    const numColumns = isMasonry
-      ? gtMobile
-        ? 2
-        : 3
-      : feedColumns === '1'
-        ? 1
-        : feedColumns === '2'
-          ? 2
-          : 3
-
+    const numColumns = feedColumns === '1' ? 1 : feedColumns === '2' ? 2 : 3
     if (numColumns === 1 || filteredFeedItems.length === 0) {
       return {columns: [filteredFeedItems]}
     }
 
     const columns: FeedRow[][] = Array.from({length: numColumns}, () => [])
-    const columnHeights = Array.from({length: numColumns}, () => 0)
 
-    // Distribute items to the shortest column for masonry effect
+    // Simple round-robin distribution
     for (let i = 0; i < filteredFeedItems.length; i++) {
-      // Find the column with the minimum height
-      let minIndex = 0
-      for (let j = 1; j < numColumns; j++) {
-        if (columnHeights[j] < columnHeights[minIndex]) {
-          minIndex = j
-        }
-      }
-
-      columns[minIndex].push(filteredFeedItems[i])
-      // Estimate height for the item (average post height)
-      // This is a simplified approach - in production you might measure actual heights
-      columnHeights[minIndex] += 300 // Approximate average post height
+      columns[i % numColumns].push(filteredFeedItems[i])
     }
 
     return {columns}
-  }, [filteredFeedItems, feedColumns, isMasonry, gtMobile])
+  }, [filteredFeedItems, feedColumns])
 
   // Artsky: Render a single list or multi-column masonry layout
-  if (feedColumns !== '1' || isMasonry) {
+  if (feedColumns !== '1') {
     const renderColumn = (items: FeedRow[], columnIndex: number) => (
       <View style={styles.masonryColumn} key={`column-${columnIndex}`}>
         <List
@@ -1226,7 +1200,6 @@ const styles = StyleSheet.create({
   masonryContainer: {
     flexDirection: 'row',
     flex: 1,
-    gap: 12,
   },
   masonryColumn: {
     flex: 1,

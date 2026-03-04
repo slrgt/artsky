@@ -83,8 +83,8 @@ export function ColumnToggleBtn({
   const size = gtMobile ? styles.sizeLarge : styles.sizeRegular
 
   const tabletSpacing = gtMobile
-    ? {right: 170, bottom: 50}
-    : {right: 90, bottom: clamp(insets.bottom, 15, 60) + 15}
+    ? {right: 230, bottom: 50}
+    : {right: 140, bottom: clamp(insets.bottom, 15, 60) + 15}
 
   return (
     <Animated.View

@@ -31,10 +31,7 @@ import {
   useFeedColumns,
   useSetFeedColumns,
 } from '#/state/preferences/feed-columns'
-import {
-  useMasonryLayout,
-  useSetMasonryLayout,
-} from '#/state/preferences/masonry-layout'
+import {useLayoutMode} from '#/state/preferences/layout-mode'
 import {type FeedSourceInfo} from '#/state/queries/feed'
 import {
   type FeedDescriptor,
@@ -46,16 +43,17 @@ import {useSession} from '#/state/session'
 import {useSetMinimalShellMode} from '#/state/shell'
 import {useHeaderOffset} from '#/components/hooks/useHeaderOffset'
 import {useAnalytics} from '#/analytics'
+import {useBreakpoints} from '#/alf'
 import {IS_NATIVE} from '#/env'
 import {PostFeed} from '../posts/PostFeed'
 import {CardViewModeBtn} from '../util/CardViewModeBtn'
 import {ColumnToggleBtn} from '../util/ColumnToggleBtn'
 import {FAB} from '../util/fab/FAB'
+import {LayoutModeBtn} from '../util/LayoutModeBtn'
 import {type ListMethods} from '../util/List'
 import {HideReadPostsBtn} from '../util/load-latest/HideReadPostsBtn'
 import {LoadLatestBtn} from '../util/load-latest/LoadLatestBtn'
 import {MainScrollProvider} from '../util/MainScrollProvider'
-import {MasonryLayoutBtn} from '../util/MasonryLayoutBtn'
 
 const POLL_FREQ = 60e3 // 60sec
 
@@ -95,19 +93,29 @@ export function FeedPage({
   const setHomeBadge = useSetHomeBadge()
   const feedColumns = useFeedColumns()
   const setFeedColumns = useSetFeedColumns()
-  const {cardViewMode, cycleCardViewMode} = useCardViewMode()
-  const isMasonry = useMasonryLayout()
-  const setIsMasonry = useSetMasonryLayout()
+  const {cardViewMode, cycleCardViewMode, setCardViewMode} = useCardViewMode()
+  const {layoutMode, toggleLayoutMode} = useLayoutMode()
+  const {gtMobile} = useBreakpoints()
+
+  // Artsky: Unified layout mode toggle - switches between Twitter and Pinterest styles
+  const onToggleLayoutMode = useCallback(() => {
+    if (layoutMode === 'twitter') {
+      // Switch to Pinterest: multi-column masonry with art cards
+      const columns = gtMobile ? '3' : '2' // 3 columns on desktop, 2 on mobile
+      setFeedColumns(columns)
+      setCardViewMode('artOnly')
+    } else {
+      // Switch to Twitter: single column with default cards
+      setFeedColumns('1')
+      setCardViewMode('default')
+    }
+    toggleLayoutMode()
+  }, [layoutMode, gtMobile, setFeedColumns, setCardViewMode, toggleLayoutMode])
 
   // Artsky: Toggle between 1, 2, and 3 columns
   const onToggleColumns = useCallback(() => {
     setFeedColumns(feedColumns === '1' ? '2' : feedColumns === '2' ? '3' : '1')
   }, [feedColumns, setFeedColumns])
-
-  // Artsky: Toggle masonry layout
-  const onToggleMasonry = useCallback(() => {
-    setIsMasonry(!isMasonry)
-  }, [isMasonry, setIsMasonry])
 
   // Artsky: State for "Hide Read Posts" floating button (one-time action, not a toggle)
   const [hideReadPostsState, setHideReadPostsState] = useState<{
@@ -204,7 +212,6 @@ export function FeedPage({
             onHideReadPostsState={setHideReadPostsState}
             feedColumns={feedColumns}
             cardViewMode={cardViewMode}
-            isMasonry={isMasonry}
           />
         </FeedFeedbackProvider>
       </MainScrollProvider>
@@ -243,13 +250,11 @@ export function FeedPage({
         />
       )}
 
-      {/* Artsky: Toggle between 1 and 2 column feed view */}
+      {/* Artsky: Unified layout mode toggle - switches between Twitter (single column) and Pinterest (masonry) styles */}
+      <LayoutModeBtn layoutMode={layoutMode} onPress={onToggleLayoutMode} />
+
+      {/* Artsky: Individual controls for advanced users - kept for fine-tuning */}
       <ColumnToggleBtn columns={feedColumns} onPress={onToggleColumns} />
-
-      {/* Artsky: Toggle masonry layout (Twitter vs Pinterest style) */}
-      <MasonryLayoutBtn isMasonry={isMasonry} onPress={onToggleMasonry} />
-
-      {/* Artsky: Toggle between full cards, mini cards, and art-only cards */}
       <CardViewModeBtn
         cardViewMode={cardViewMode}
         onPress={cycleCardViewMode}

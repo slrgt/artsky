@@ -10,11 +10,12 @@ import Svg, {Line, Rect} from 'react-native-svg'
 
 import {useMinimalShellFabTransform} from '#/lib/hooks/useMinimalShellTransform'
 import {clamp} from '#/lib/numbers'
+import {type LayoutMode} from '#/state/preferences/layout-mode'
 import {atoms as a, useBreakpoints, useTheme} from '#/alf'
 import {IS_WEB} from '#/env'
 
-interface MasonryLayoutBtnProps {
-  isMasonry: boolean
+interface LayoutModeBtnProps {
+  layoutMode: LayoutMode
   onPress: () => void
   style?: StyleProp<ViewStyle>
 }
@@ -30,7 +31,8 @@ function TwitterIcon({size = 20}: {size?: number}) {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round">
-      <Rect x={3} y={3} width={18} height={18} rx={2} ry={2} />
+      <Rect x={7} y={3} width={10} height={18} rx={1} />
+      <Line x1={7} y1={9} x2={17} y2={9} />
     </Svg>
   )
 }
@@ -46,18 +48,21 @@ function PinterestIcon({size = 20}: {size?: number}) {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round">
-      <Rect x={3} y={3} width={9} height={18} rx={2} ry={2} />
-      <Rect x={12} y={3} width={9} height={12} rx={2} ry={2} />
-      <Line x1={3} y1={15} x2={21} y2={15} strokeDasharray="2 2" />
+      {/* Masonry/Pinterest-style layout with staggered cards */}
+      <Rect x={2} y={3} width={6} height={8} rx={1} />
+      <Rect x={2} y={13} width={6} height={8} rx={1} />
+      <Rect x={9} y={3} width={6} height={12} rx={1} />
+      <Rect x={16} y={3} width={6} height={6} rx={1} />
+      <Rect x={16} y={11} width={6} height={10} rx={1} />
     </Svg>
   )
 }
 
-export function MasonryLayoutBtn({
-  isMasonry,
+export function LayoutModeBtn({
+  layoutMode,
   onPress,
   style,
-}: MasonryLayoutBtnProps) {
+}: LayoutModeBtnProps) {
   const insets = useSafeAreaInsets()
   const {gtMobile} = useBreakpoints()
   const t = useTheme()
@@ -65,9 +70,10 @@ export function MasonryLayoutBtn({
 
   const size = gtMobile ? styles.sizeLarge : styles.sizeRegular
 
+  // Primary layout toggle - position prominently
   const tabletSpacing = gtMobile
-    ? {right: 290, bottom: 50}
-    : {right: 190, bottom: clamp(insets.bottom, 15, 60) + 15}
+    ? {right: 170, bottom: 50}
+    : {right: 90, bottom: clamp(insets.bottom, 15, 60) + 15}
 
   return (
     <Animated.View
@@ -79,6 +85,11 @@ export function MasonryLayoutBtn({
       ]}>
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={
+          layoutMode === 'twitter'
+            ? 'Switch to Pinterest layout'
+            : 'Switch to Twitter layout'
+        }
         onPress={onPress}
         style={[
           a.rounded_full,
@@ -88,10 +99,10 @@ export function MasonryLayoutBtn({
           a.justify_center,
           style,
         ]}>
-        {isMasonry ? (
-          <PinterestIcon size={gtMobile ? 24 : 20} />
-        ) : (
+        {layoutMode === 'twitter' ? (
           <TwitterIcon size={gtMobile ? 24 : 20} />
+        ) : (
+          <PinterestIcon size={gtMobile ? 24 : 20} />
         )}
       </Pressable>
     </Animated.View>
