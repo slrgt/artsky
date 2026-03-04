@@ -16,10 +16,7 @@ import {Provider as SubtitlesProvider} from './subtitles'
 import {Provider as TrendingSettingsProvider} from './trending'
 import {Provider as UsedStarterPacksProvider} from './used-starter-packs'
 
-export {
-  useRequireAltTextEnabled,
-  useSetRequireAltTextEnabled,
-} from './alt-text-required'
+export {useRequireAltTextEnabled, useSetRequireAltTextEnabled} from './alt-text-required'
 export {useAutoplayDisabled, useSetAutoplayDisabled} from './autoplay'
 export {useCardViewMode} from './card-view-mode'
 export {useHapticsDisabled, useSetHapticsDisabled} from './disable-haptics'
@@ -29,9 +26,9 @@ export {
 } from './external-embeds-prefs'
 export {useFeedColumns} from './feed-columns'
 export {useHiddenPosts, useHiddenPostsApi} from './hidden-posts'
-export {useMasonryLayout, useSetMasonryLayout} from './masonry-layout'
 export {useLabelDefinitions} from './label-defs'
 export {useLanguagePrefs, useLanguagePrefsApi} from './languages'
+export {useMasonryLayout, useSetMasonryLayout} from './masonry-layout'
 export {useSetSubtitlesEnabled, useSubtitlesEnabled} from './subtitles'
 
 export function Provider({children}: React.PropsWithChildren<{}>) {
