@@ -103,7 +103,7 @@ msgstr ""
 msgid "{0, plural, one {following} other {following}}"
 msgstr ""
 
-#: src/view/com/feeds/FeedPage.tsx:196
+#: src/view/com/feeds/FeedPage.tsx:226
 msgid "{0, plural, one {Hide 1 read post} other {Hide # read posts}}"
 msgstr ""
 
@@ -5635,7 +5635,7 @@ msgstr ""
 #: src/screens/Profile/ProfileFeed/index.tsx:233
 #: src/screens/Profile/Sections/Feed.tsx:116
 #: src/screens/ProfileList/FeedSection.tsx:112
-#: src/view/com/feeds/FeedPage.tsx:184
+#: src/view/com/feeds/FeedPage.tsx:214
 msgid "Load new posts"
 msgstr ""
 
@@ -6153,7 +6153,7 @@ msgstr ""
 msgid "New post"
 msgstr ""
 
-#: src/view/com/feeds/FeedPage.tsx:211
+#: src/view/com/feeds/FeedPage.tsx:241
 msgctxt "action"
 msgid "New post"
 msgstr ""
@@ -9740,7 +9740,7 @@ msgid "There was an issue fetching notifications. Tap here to try again."
 msgstr ""
 
 #: src/screens/Search/Explore.tsx:988
-#: src/view/com/posts/PostFeed.tsx:812
+#: src/view/com/posts/PostFeed.tsx:822
 msgid "There was an issue fetching posts. Tap here to try again."
 msgstr ""
 
