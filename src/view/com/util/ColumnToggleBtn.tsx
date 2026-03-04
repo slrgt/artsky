@@ -94,7 +94,8 @@ export function ColumnToggleBtn({
         tabletSpacing,
         !gtMobile && fabMinimalShellTransform,
       ]}>
-      <Pressable accessibilityRole="button"
+      <Pressable
+        accessibilityRole="button"
         onPress={onPress}
         style={[
           a.rounded_full,

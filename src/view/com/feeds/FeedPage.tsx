@@ -31,7 +31,10 @@ import {
   useFeedColumns,
   useSetFeedColumns,
 } from '#/state/preferences/feed-columns'
-import {useMasonryLayout, useSetMasonryLayout} from '#/state/preferences/masonry-layout'
+import {
+  useMasonryLayout,
+  useSetMasonryLayout,
+} from '#/state/preferences/masonry-layout'
 import {type FeedSourceInfo} from '#/state/queries/feed'
 import {
   type FeedDescriptor,

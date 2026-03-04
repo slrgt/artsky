@@ -1106,10 +1106,10 @@ let PostFeed = ({
         ? 2
         : 3
       : feedColumns === '1'
-      ? 1
-      : feedColumns === '2'
-      ? 2
-      : 3
+        ? 1
+        : feedColumns === '2'
+          ? 2
+          : 3
 
     if (numColumns === 1 || filteredFeedItems.length === 0) {
       return {columns: [filteredFeedItems]}

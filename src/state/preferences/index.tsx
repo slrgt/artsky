@@ -16,7 +16,10 @@ import {Provider as SubtitlesProvider} from './subtitles'
 import {Provider as TrendingSettingsProvider} from './trending'
 import {Provider as UsedStarterPacksProvider} from './used-starter-packs'
 
-export {useRequireAltTextEnabled, useSetRequireAltTextEnabled} from './alt-text-required'
+export {
+  useRequireAltTextEnabled,
+  useSetRequireAltTextEnabled,
+} from './alt-text-required'
 export {useAutoplayDisabled, useSetAutoplayDisabled} from './autoplay'
 export {useCardViewMode} from './card-view-mode'
 export {useHapticsDisabled, useSetHapticsDisabled} from './disable-haptics'
