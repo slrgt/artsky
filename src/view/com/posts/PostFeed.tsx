@@ -934,6 +934,8 @@ let PostFeed = ({
       onPressShowLess,
       enableHideReadPosts,
       readPostUris,
+      feedColumns,
+      cardViewMode,
     ],
   )
 
@@ -1115,44 +1117,45 @@ let PostFeed = ({
   if (feedColumns !== '1') {
     const renderColumn = (items: FeedRow[], columnIndex: number) => (
       <View style={styles.masonryColumn} key={`column-${columnIndex}`}>
-        <List
-          testID={testID ? `${testID}-col-${columnIndex}` : undefined}
-          data={items}
-          keyExtractor={item => `col-${columnIndex}-${item.key}`}
-          renderItem={renderItem}
-          ListFooterComponent={columnIndex === 0 ? FeedFooter : undefined}
-          refreshing={isPTRing}
-          onRefresh={onRefresh}
-          headerOffset={headerOffset}
-          progressViewOffset={progressViewOffset}
-          contentContainerStyle={{
-            minHeight: Dimensions.get('window').height * 1.5,
-          }}
-          onScrolledDownChange={
-            columnIndex === 0 ? onScrolledDownChange : undefined
-          }
-          onEndReached={onEndReached}
-          onEndReachedThreshold={2}
-          removeClippedSubviews={true}
-          extraData={extraData}
-          desktopFixedHeight={
-            desktopFixedHeightOffset ? desktopFixedHeightOffset : true
-          }
-          initialNumToRender={initialNumToRenderOverride ?? initialNumToRender}
-          windowSize={9}
-          maxToRenderPerBatch={IS_IOS ? 5 : 1}
-          updateCellsBatchingPeriod={40}
-          onItemSeen={onItemSeen}
-          onItemSeenWhen="exit"
-        />
+        {items.map((item, index) => (
+          <View key={`col-${columnIndex}-${item.key}`}>
+            {renderItem({item, index} as ListRenderItemInfo<FeedRow>)}
+          </View>
+        ))}
       </View>
     )
 
     return (
-      <View testID={testID} style={[style, styles.masonryContainer]}>
-        {columnItems.columns.map((colItems, index) =>
-          renderColumn(colItems, index),
-        )}
+      <View testID={testID} style={style}>
+        <List
+          testID={testID ? `${testID}-flatlist` : undefined}
+          ref={scrollElRef}
+          data={[{type: 'masonry' as const, key: 'masonry-container'}]}
+          keyExtractor={() => 'masonry-container'}
+          renderItem={() => (
+            <View style={styles.masonryContainer}>
+              {columnItems.columns.map((colItems, index) =>
+                renderColumn(colItems, index),
+              )}
+            </View>
+          )}
+          ListFooterComponent={FeedFooter}
+          ListHeaderComponent={ListHeaderComponent}
+          refreshing={isPTRing}
+          onRefresh={onRefresh}
+          headerOffset={headerOffset}
+          progressViewOffset={progressViewOffset}
+          onScrolledDownChange={onScrolledDownChange}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={2}
+          removeClippedSubviews={false}
+          extraData={extraData}
+          desktopFixedHeight={false}
+          initialNumToRender={1}
+          windowSize={9}
+          maxToRenderPerBatch={1}
+          updateCellsBatchingPeriod={40}
+        />
       </View>
     )
   }
@@ -1199,10 +1202,11 @@ const styles = StyleSheet.create({
   feedFooter: {paddingTop: 20},
   masonryContainer: {
     flexDirection: 'row',
-    flex: 1,
+    alignItems: 'flex-start',
   },
   masonryColumn: {
     flex: 1,
+    paddingHorizontal: 4,
   },
 })
 
