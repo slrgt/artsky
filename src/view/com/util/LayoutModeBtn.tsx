@@ -90,6 +90,7 @@ export function LayoutModeBtn({
             ? 'Switch to Pinterest layout'
             : 'Switch to Twitter layout'
         }
+        accessibilityHint=""
         onPress={onPress}
         style={[
           a.rounded_full,
