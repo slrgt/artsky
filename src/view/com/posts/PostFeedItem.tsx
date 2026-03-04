@@ -306,9 +306,6 @@ let FeedItemInner = ({
         marginVertical: 4,
         paddingHorizontal: isPreviewCard ? 8 : undefined,
         paddingVertical: isPreviewCard ? 8 : undefined,
-        // Artsky: Prevent vertical collapsing in masonry layout
-        minHeight: 150, // Minimum height to prevent squishing (increased from 100)
-        flexShrink: 0, // Prevent flexbox from shrinking this item
       }),
     },
   ]
@@ -573,11 +570,6 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     paddingRight: 8,
     paddingTop: 8,
-    // Artsky: In masonry layout, posts should take full column width
-    width: '100%',
-    // Artsky: Prevent posts from becoming tiny when new posts load
-    minWidth: '100%',
-    flexShrink: 0,
   },
   replyLine: {
     width: 2,

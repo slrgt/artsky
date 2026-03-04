@@ -1103,11 +1103,9 @@ let PostFeed = ({
 
     const columns: FeedRow[][] = Array.from({length: numColumns}, () => [])
 
-    // Stable distribution: posts maintain their column assignment even when new posts load
-    // This prevents visual jumping when paginating
+    // Simple round-robin distribution
     for (let i = 0; i < filteredFeedItems.length; i++) {
-      const columnIndex = i % numColumns
-      columns[columnIndex].push(filteredFeedItems[i])
+      columns[i % numColumns].push(filteredFeedItems[i])
     }
 
     return {columns}
@@ -1133,7 +1131,7 @@ let PostFeed = ({
           onScrolledDownChange={
             columnIndex === 0 ? onScrolledDownChange : undefined
           }
-          onEndReached={columnIndex === 0 ? onEndReached : undefined}
+          onEndReached={onEndReached}
           onEndReachedThreshold={2}
           removeClippedSubviews={true}
           extraData={extraData}
@@ -1202,13 +1200,9 @@ const styles = StyleSheet.create({
   masonryContainer: {
     flexDirection: 'row',
     flex: 1,
-    // Artsky: Ensure masonry container maintains stable layout
-    minWidth: '100%',
   },
   masonryColumn: {
     flex: 1,
-    // Artsky: Ensure columns maintain stable width when new posts load
-    minWidth: 1, // Prevent columns from collapsing to zero width
   },
 })
 
