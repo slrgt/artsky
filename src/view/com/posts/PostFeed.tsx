@@ -1114,7 +1114,7 @@ let PostFeed = ({
   // Artsky: Render a single list or multi-column masonry layout
   if (feedColumns !== '1') {
     const numColumns = columnItems.numColumns
-    
+
     return (
       <View testID={testID} style={[style, {flex: 1}]}>
         <List
