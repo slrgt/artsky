@@ -306,6 +306,9 @@ let FeedItemInner = ({
         marginVertical: 4,
         paddingHorizontal: isPreviewCard ? 8 : undefined,
         paddingVertical: isPreviewCard ? 8 : undefined,
+        // Artsky: Prevent vertical collapsing in masonry layout
+        minHeight: 150, // Minimum height to prevent squishing (increased from 100)
+        flexShrink: 0, // Prevent flexbox from shrinking this item
       }),
     },
   ]
