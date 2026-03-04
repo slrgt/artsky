@@ -46,8 +46,6 @@ import {useHeaderOffset} from '#/components/hooks/useHeaderOffset'
 import {useAnalytics} from '#/analytics'
 import {IS_NATIVE} from '#/env'
 import {PostFeed} from '../posts/PostFeed'
-import {CardViewModeBtn} from '../util/CardViewModeBtn'
-import {ColumnToggleBtn} from '../util/ColumnToggleBtn'
 import {FAB} from '../util/fab/FAB'
 import {LayoutModeBtn} from '../util/LayoutModeBtn'
 import {type ListMethods} from '../util/List'
@@ -93,7 +91,7 @@ export function FeedPage({
   const setHomeBadge = useSetHomeBadge()
   const feedColumns = useFeedColumns()
   const setFeedColumns = useSetFeedColumns()
-  const {cardViewMode, cycleCardViewMode, setCardViewMode} = useCardViewMode()
+  const {cardViewMode, setCardViewMode} = useCardViewMode()
   const {layoutMode, toggleLayoutMode} = useLayoutMode()
   const {gtMobile} = useBreakpoints()
 
@@ -111,11 +109,6 @@ export function FeedPage({
     }
     toggleLayoutMode()
   }, [layoutMode, gtMobile, setFeedColumns, setCardViewMode, toggleLayoutMode])
-
-  // Artsky: Toggle between 1, 2, and 3 columns
-  const onToggleColumns = useCallback(() => {
-    setFeedColumns(feedColumns === '1' ? '2' : feedColumns === '2' ? '3' : '1')
-  }, [feedColumns, setFeedColumns])
 
   // Artsky: State for "Hide Read Posts" floating button (one-time action, not a toggle)
   const [hideReadPostsState, setHideReadPostsState] = useState<{
@@ -252,13 +245,6 @@ export function FeedPage({
 
       {/* Artsky: Unified layout mode toggle - switches between Twitter (single column) and Pinterest (masonry) styles */}
       <LayoutModeBtn layoutMode={layoutMode} onPress={onToggleLayoutMode} />
-
-      {/* Artsky: Individual controls for advanced users - kept for fine-tuning */}
-      <ColumnToggleBtn columns={feedColumns} onPress={onToggleColumns} />
-      <CardViewModeBtn
-        cardViewMode={cardViewMode}
-        onPress={cycleCardViewMode}
-      />
     </View>
   )
 }
