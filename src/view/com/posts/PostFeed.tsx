@@ -1202,9 +1202,13 @@ const styles = StyleSheet.create({
   masonryContainer: {
     flexDirection: 'row',
     flex: 1,
+    // Artsky: Ensure masonry container maintains stable layout
+    minWidth: '100%',
   },
   masonryColumn: {
     flex: 1,
+    // Artsky: Ensure columns maintain stable width when new posts load
+    minWidth: 1, // Prevent columns from collapsing to zero width
   },
 })
 
