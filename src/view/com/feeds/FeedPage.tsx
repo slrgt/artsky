@@ -91,24 +91,24 @@ export function FeedPage({
   const setHomeBadge = useSetHomeBadge()
   const feedColumns = useFeedColumns()
   const setFeedColumns = useSetFeedColumns()
-  const {cardViewMode, setCardViewMode} = useCardViewMode()
+  const {cardViewMode} = useCardViewMode()
   const {layoutMode, toggleLayoutMode} = useLayoutMode()
   const {gtMobile} = useBreakpoints()
 
   // Artsky: Unified layout mode toggle - switches between Twitter and Pinterest styles
   const onToggleLayoutMode = useCallback(() => {
     if (layoutMode === 'twitter') {
-      // Switch to Pinterest: multi-column masonry with art cards
+      // Switch to Pinterest: multi-column masonry (keep default card view)
       const columns = gtMobile ? '3' : '2' // 3 columns on desktop, 2 on mobile
       setFeedColumns(columns)
-      setCardViewMode('artOnly')
+      // Keep cardViewMode as 'default' (full content, not artOnly)
     } else {
-      // Switch to Twitter: single column with default cards
+      // Switch to Twitter: single column
       setFeedColumns('1')
-      setCardViewMode('default')
+      // Keep cardViewMode as 'default'
     }
     toggleLayoutMode()
-  }, [layoutMode, gtMobile, setFeedColumns, setCardViewMode, toggleLayoutMode])
+  }, [layoutMode, gtMobile, setFeedColumns, toggleLayoutMode])
 
   // Artsky: State for "Hide Read Posts" floating button (one-time action, not a toggle)
   const [hideReadPostsState, setHideReadPostsState] = useState<{

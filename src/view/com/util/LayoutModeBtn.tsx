@@ -48,12 +48,10 @@ function PinterestIcon({size = 20}: {size?: number}) {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round">
-      {/* Masonry/Pinterest-style layout with staggered cards */}
-      <Rect x={2} y={3} width={6} height={8} rx={1} />
-      <Rect x={2} y={13} width={6} height={8} rx={1} />
-      <Rect x={9} y={3} width={6} height={12} rx={1} />
-      <Rect x={16} y={3} width={6} height={6} rx={1} />
-      <Rect x={16} y={11} width={6} height={10} rx={1} />
+      {/* Multi-column layout (2-3 columns) */}
+      <Rect x={2} y={3} width={6} height={18} rx={1} />
+      <Rect x={10} y={3} width={6} height={18} rx={1} />
+      <Rect x={18} y={3} width={4} height={18} rx={1} />
     </Svg>
   )
 }
