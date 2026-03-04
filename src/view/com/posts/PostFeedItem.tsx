@@ -70,6 +70,10 @@ interface FeedItemProps {
   hideTopBorder?: boolean
   isParentBlocked?: boolean
   isParentNotFound?: boolean
+  /** Artsky: When true, render as a compact preview card (for masonry layout) */
+  isPreviewCard?: boolean
+  /** Artsky: Card view mode - full, mini, or art only */
+  cardViewMode?: 'default' | 'minimalist' | 'artOnly'
 }
 
 export function PostFeedItem({
@@ -90,12 +94,18 @@ export function PostFeedItem({
   rootPost,
   onShowLess,
   isRead = false,
+  isPreviewCard = false,
+  cardViewMode = 'default',
 }: FeedItemProps & {
   post: AppBskyFeedDefs.PostView
   rootPost: AppBskyFeedDefs.PostView
   onShowLess?: (interaction: AppBskyFeedDefs.Interaction) => void
   /** Artsky: When true, post has been scrolled past (read) - shows darkened background */
   isRead?: boolean
+  /** Artsky: When true, render as a compact preview card (for masonry layout) */
+  isPreviewCard?: boolean
+  /** Artsky: Card view mode - full, mini, or art only */
+  cardViewMode?: 'default' | 'minimalist' | 'artOnly'
 }): React.ReactNode {
   const postShadowed = usePostShadow(post)
   const richText = useMemo(
@@ -132,6 +142,8 @@ export function PostFeedItem({
         rootPost={rootPost}
         onShowLess={onShowLess}
         isRead={isRead}
+        isPreviewCard={isPreviewCard}
+        cardViewMode={cardViewMode}
       />
     )
   }
@@ -157,12 +169,16 @@ let FeedItemInner = ({
   rootPost,
   onShowLess,
   isRead = false,
+  isPreviewCard = false,
+  cardViewMode = 'default',
 }: FeedItemProps & {
   richText: RichTextAPI
   post: Shadow<AppBskyFeedDefs.PostView>
   rootPost: AppBskyFeedDefs.PostView
   onShowLess?: (interaction: AppBskyFeedDefs.Interaction) => void
   isRead?: boolean
+  isPreviewCard?: boolean
+  cardViewMode?: 'default' | 'minimalist' | 'artOnly'
 }): React.ReactNode => {
   const ax = useAnalytics()
   const queryClient = useQueryClient()
@@ -266,18 +282,36 @@ let FeedItemInner = ({
 
   const outerStyles = [
     styles.outer,
+    isPreviewCard ? styles.outerPreviewCard : undefined,
     {
       borderColor: pal.colors.border,
       paddingBottom:
         isThreadLastChild || (!isThreadChild && !isThreadParent)
-          ? 8
+          ? isPreviewCard
+            ? 4
+            : 8
           : undefined,
+      // Artsky: In preview card mode, use borders for separation instead of top border
       borderTopWidth:
-        hideTopBorder || isThreadChild ? 0 : StyleSheet.hairlineWidth,
+        hideTopBorder || isThreadChild || isPreviewCard
+          ? 0
+          : StyleSheet.hairlineWidth,
       // Artsky: Darken background when post has been read (scrolled past)
       ...(isRead && {backgroundColor: t.palette.contrast_50}),
+      // Artsky: Preview card mode - add border for card-like appearance
+      ...(isPreviewCard && {
+        borderWidth: 1,
+        borderRadius: 12,
+        marginHorizontal: 4,
+        marginVertical: 4,
+        paddingHorizontal: isPreviewCard ? 8 : undefined,
+        paddingVertical: isPreviewCard ? 8 : undefined,
+      }),
     },
   ]
+
+  // Artsky: Smaller avatar in preview card mode
+  const avatarSize = isPreviewCard ? 32 : 42
 
   /**
    * If `post[0]` in this slice is the actual root post (not an orphan thread),
@@ -334,7 +368,7 @@ let FeedItemInner = ({
         </View>
 
         <View style={[a.pt_sm, a.flex_shrink]}>
-          {reason && (
+          {reason && cardViewMode !== 'artOnly' && (
             <PostFeedReason
               reason={reason}
               moderation={moderation}
@@ -345,66 +379,87 @@ let FeedItemInner = ({
       </View>
 
       <View style={styles.layout}>
-        <View style={styles.layoutAvi}>
-          <PreviewableUserAvatar
-            size={42}
-            profile={post.author}
-            moderation={moderation.ui('avatar')}
-            type={post.author.associated?.labeler ? 'labeler' : 'user'}
-            onBeforePress={onOpenAuthor}
-            live={live}
-          />
-          {isThreadParent && (
-            <View
-              style={[
-                styles.replyLine,
-                {
-                  flexGrow: 1,
-                  backgroundColor: pal.colors.replyLine,
-                  marginTop: live ? 8 : 4,
-                },
-              ]}
+        {/* Artsky: Hide avatar in artOnly mode */}
+        {cardViewMode !== 'artOnly' && (
+          <View
+            style={isPreviewCard ? styles.layoutAviPreview : styles.layoutAvi}>
+            <PreviewableUserAvatar
+              size={avatarSize}
+              profile={post.author}
+              moderation={moderation.ui('avatar')}
+              type={post.author.associated?.labeler ? 'labeler' : 'user'}
+              onBeforePress={onOpenAuthor}
+              live={live}
             />
-          )}
-        </View>
-        <View style={styles.layoutContent}>
-          <PostMeta
-            author={post.author}
-            moderation={moderation}
-            timestamp={post.indexedAt}
-            postHref={href}
-            onOpenAuthor={onOpenAuthor}
-          />
-          {showReplyTo &&
-            (parentAuthor || isParentBlocked || isParentNotFound) && (
-              <PostRepliedTo
-                parentAuthor={parentAuthor}
-                isParentBlocked={isParentBlocked}
-                isParentNotFound={isParentNotFound}
+            {isThreadParent && (
+              <View
+                style={[
+                  styles.replyLine,
+                  {
+                    flexGrow: 1,
+                    backgroundColor: pal.colors.replyLine,
+                    marginTop: live ? 8 : 4,
+                  },
+                ]}
               />
             )}
-          <LabelsOnMyPost post={post} />
-          <PostContent
-            moderation={moderation}
-            richText={richText}
-            postEmbed={post.embed}
-            postAuthor={post.author}
-            onOpenEmbed={onOpenEmbed}
-            post={post}
-            threadgateRecord={threadgateRecord}
-          />
-          <PostControls
-            post={post}
-            record={record}
-            richText={richText}
-            onPressReply={onPressReply}
-            logContext="FeedItem"
-            feedContext={feedContext}
-            reqId={reqId}
-            threadgateRecord={threadgateRecord}
-            onShowLess={onShowLess}
-            viaRepost={viaRepost}
-          />
+          </View>
+        )}
+        <View
+          style={
+            isPreviewCard ? styles.layoutContentPreview : styles.layoutContent
+          }>
+          {/* Artsky: Hide author info in artOnly mode */}
+          {cardViewMode !== 'artOnly' && (
+            <PostMeta
+              author={post.author}
+              moderation={moderation}
+              timestamp={post.indexedAt}
+              postHref={href}
+              onOpenAuthor={onOpenAuthor}
+            />
+          )}
+          {/* Artsky: Hide author info in artOnly mode */}
+          {cardViewMode !== 'artOnly' && (
+            <>
+              {showReplyTo &&
+                (parentAuthor || isParentBlocked || isParentNotFound) && (
+                  <PostRepliedTo
+                    parentAuthor={parentAuthor}
+                    isParentBlocked={isParentBlocked}
+                    isParentNotFound={isParentNotFound}
+                  />
+                )}
+              <LabelsOnMyPost post={post} />
+            </>
+          )}
+          {/* Artsky: Show text content only in default mode, hide in minimalist/artOnly */}
+          {cardViewMode === 'default' && (
+            <PostContent
+              moderation={moderation}
+              richText={richText}
+              postEmbed={post.embed}
+              postAuthor={post.author}
+              onOpenEmbed={onOpenEmbed}
+              post={post}
+              threadgateRecord={threadgateRecord}
+            />
+          )}
+          {/* Artsky: Show actions in default/minimalist modes, hide in artOnly */}
+          {cardViewMode !== 'artOnly' && (
+            <PostControls
+              post={post}
+              record={record}
+              richText={richText}
+              onPressReply={onPressReply}
+              logContext="FeedItem"
+              feedContext={feedContext}
+              reqId={reqId}
+              threadgateRecord={threadgateRecord}
+              onShowLess={onShowLess}
+              viaRepost={viaRepost}
+            />
+          )}
         </View>
 
         <DiscoverDebug feedContext={feedContext} />
@@ -511,6 +566,11 @@ const styles = StyleSheet.create({
     paddingRight: 15,
     cursor: 'pointer',
   },
+  outerPreviewCard: {
+    paddingLeft: 8,
+    paddingRight: 8,
+    paddingTop: 8,
+  },
   replyLine: {
     width: 2,
     marginLeft: 'auto',
@@ -526,10 +586,22 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 999,
   },
+  layoutAviPreview: {
+    paddingLeft: 4,
+    paddingRight: 6,
+    position: 'relative',
+    zIndex: 999,
+  },
   layoutContent: {
     position: 'relative',
     flex: 1,
     zIndex: 0,
+  },
+  layoutContentPreview: {
+    position: 'relative',
+    flex: 1,
+    zIndex: 0,
+    marginLeft: 4,
   },
   alert: {
     marginTop: 6,

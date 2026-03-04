@@ -129,6 +129,7 @@ const schema = z.object({
   mutedThreads: z.array(z.string()),
   trendingDisabled: z.boolean().optional(),
   trendingVideoDisabled: z.boolean().optional(),
+  feedColumns: z.enum(['1', '2', '3']),
 })
 export type Schema = z.infer<typeof schema>
 
@@ -176,6 +177,7 @@ export const defaults: Schema = {
   subtitlesEnabled: true,
   trendingDisabled: false,
   trendingVideoDisabled: false,
+  feedColumns: '1',
 }
 
 export function tryParse(rawData: string): Schema | undefined {

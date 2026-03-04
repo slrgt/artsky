@@ -26,6 +26,12 @@ import {s} from '#/lib/styles'
 import {listenSoftReset} from '#/state/events'
 import {FeedFeedbackProvider, useFeedFeedback} from '#/state/feed-feedback'
 import {useSetHomeBadge} from '#/state/home-badge'
+import {useCardViewMode} from '#/state/preferences/card-view-mode'
+import {
+  useFeedColumns,
+  useSetFeedColumns,
+} from '#/state/preferences/feed-columns'
+import {useMasonryLayout, useSetMasonryLayout} from '#/state/preferences/masonry-layout'
 import {type FeedSourceInfo} from '#/state/queries/feed'
 import {
   type FeedDescriptor,
@@ -39,11 +45,14 @@ import {useHeaderOffset} from '#/components/hooks/useHeaderOffset'
 import {useAnalytics} from '#/analytics'
 import {IS_NATIVE} from '#/env'
 import {PostFeed} from '../posts/PostFeed'
+import {CardViewModeBtn} from '../util/CardViewModeBtn'
+import {ColumnToggleBtn} from '../util/ColumnToggleBtn'
 import {FAB} from '../util/fab/FAB'
 import {type ListMethods} from '../util/List'
 import {HideReadPostsBtn} from '../util/load-latest/HideReadPostsBtn'
 import {LoadLatestBtn} from '../util/load-latest/LoadLatestBtn'
 import {MainScrollProvider} from '../util/MainScrollProvider'
+import {MasonryLayoutBtn} from '../util/MasonryLayoutBtn'
 
 const POLL_FREQ = 60e3 // 60sec
 
@@ -81,6 +90,21 @@ export function FeedPage({
   const scrollElRef = useRef<ListMethods>(null)
   const [hasNew, setHasNew] = useState(false)
   const setHomeBadge = useSetHomeBadge()
+  const feedColumns = useFeedColumns()
+  const setFeedColumns = useSetFeedColumns()
+  const {cardViewMode, cycleCardViewMode} = useCardViewMode()
+  const isMasonry = useMasonryLayout()
+  const setIsMasonry = useSetMasonryLayout()
+
+  // Artsky: Toggle between 1, 2, and 3 columns
+  const onToggleColumns = useCallback(() => {
+    setFeedColumns(feedColumns === '1' ? '2' : feedColumns === '2' ? '3' : '1')
+  }, [feedColumns, setFeedColumns])
+
+  // Artsky: Toggle masonry layout
+  const onToggleMasonry = useCallback(() => {
+    setIsMasonry(!isMasonry)
+  }, [isMasonry, setIsMasonry])
 
   // Artsky: State for "Hide Read Posts" floating button (one-time action, not a toggle)
   const [hideReadPostsState, setHideReadPostsState] = useState<{
@@ -175,6 +199,9 @@ export function FeedPage({
             isVideoFeed={isVideoFeed}
             enableHideReadPosts={ENABLE_HIDE_READ_POSTS}
             onHideReadPostsState={setHideReadPostsState}
+            feedColumns={feedColumns}
+            cardViewMode={cardViewMode}
+            isMasonry={isMasonry}
           />
         </FeedFeedbackProvider>
       </MainScrollProvider>
@@ -212,6 +239,18 @@ export function FeedPage({
           accessibilityHint=""
         />
       )}
+
+      {/* Artsky: Toggle between 1 and 2 column feed view */}
+      <ColumnToggleBtn columns={feedColumns} onPress={onToggleColumns} />
+
+      {/* Artsky: Toggle masonry layout (Twitter vs Pinterest style) */}
+      <MasonryLayoutBtn isMasonry={isMasonry} onPress={onToggleMasonry} />
+
+      {/* Artsky: Toggle between full cards, mini cards, and art-only cards */}
+      <CardViewModeBtn
+        cardViewMode={cardViewMode}
+        onPress={cycleCardViewMode}
+      />
     </View>
   )
 }

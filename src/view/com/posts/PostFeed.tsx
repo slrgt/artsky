@@ -40,6 +40,7 @@ import {logger} from '#/logger'
 import {usePostAuthorShadowFilter} from '#/state/cache/profile-shadow'
 import {listenPostCreated} from '#/state/events'
 import {useFeedFeedbackContext} from '#/state/feed-feedback'
+import {type CardViewMode} from '#/state/preferences/card-view-mode'
 import {useTrendingSettings} from '#/state/preferences/trending'
 import {STALE} from '#/state/queries'
 import {
@@ -215,6 +216,9 @@ let PostFeed = ({
   isVideoFeed = false,
   enableHideReadPosts = false,
   onHideReadPostsState,
+  feedColumns = '1',
+  cardViewMode = 'default',
+  isMasonry = false,
 }: {
   feed: FeedDescriptor
   feedParams?: FeedParams
@@ -245,6 +249,12 @@ let PostFeed = ({
     readCount: number
     onPress: () => void
   }) => void
+  /** Artsky: Number of columns for feed layout */
+  feedColumns?: '1' | '2' | '3'
+  /** Artsky: Card view mode - full cards, mini cards, or art only */
+  cardViewMode?: CardViewMode
+  /** Artsky: When true, use Pinterest-style masonry layout */
+  isMasonry?: boolean
 }): React.ReactNode => {
   const ax = useAnalytics()
   const {_} = useLingui()
@@ -846,6 +856,8 @@ let PostFeed = ({
           ENABLE_HIDE_READ_POSTS &&
           enableHideReadPosts &&
           readPostUris.has(item.post.uri)
+        // Artsky: preview card mode when in multi-column view OR minimalist/artOnly mode
+        const isPreviewCard = feedColumns !== '1' || cardViewMode !== 'default'
         return (
           <PostFeedItem
             post={item.post}
@@ -868,6 +880,8 @@ let PostFeed = ({
             rootPost={slice.items[0].post}
             onShowLess={onPressShowLess}
             isRead={isRead}
+            isPreviewCard={isPreviewCard}
+            cardViewMode={cardViewMode}
           />
         )
       } else if (row.type === 'sliceViewFullThread') {
@@ -1083,6 +1097,92 @@ let PostFeed = ({
     onHideReadPosts,
   ])
 
+  // Artsky: Distribute feed items into columns for masonry layout
+  const columnItems = useMemo(() => {
+    // For masonry layout, always use 2 columns on mobile, 3 on desktop
+    // This is handled by the isMasonry flag
+    const numColumns = isMasonry
+      ? gtMobile
+        ? 2
+        : 3
+      : feedColumns === '1'
+      ? 1
+      : feedColumns === '2'
+      ? 2
+      : 3
+
+    if (numColumns === 1 || filteredFeedItems.length === 0) {
+      return {columns: [filteredFeedItems]}
+    }
+
+    const columns: FeedRow[][] = Array.from({length: numColumns}, () => [])
+    const columnHeights = Array.from({length: numColumns}, () => 0)
+
+    // Distribute items to the shortest column for masonry effect
+    for (let i = 0; i < filteredFeedItems.length; i++) {
+      // Find the column with the minimum height
+      let minIndex = 0
+      for (let j = 1; j < numColumns; j++) {
+        if (columnHeights[j] < columnHeights[minIndex]) {
+          minIndex = j
+        }
+      }
+
+      columns[minIndex].push(filteredFeedItems[i])
+      // Estimate height for the item (average post height)
+      // This is a simplified approach - in production you might measure actual heights
+      columnHeights[minIndex] += 300 // Approximate average post height
+    }
+
+    return {columns}
+  }, [filteredFeedItems, feedColumns, isMasonry, gtMobile])
+
+  // Artsky: Render a single list or multi-column masonry layout
+  if (feedColumns !== '1' || isMasonry) {
+    const renderColumn = (items: FeedRow[], columnIndex: number) => (
+      <View style={styles.masonryColumn} key={`column-${columnIndex}`}>
+        <List
+          testID={testID ? `${testID}-col-${columnIndex}` : undefined}
+          data={items}
+          keyExtractor={item => `col-${columnIndex}-${item.key}`}
+          renderItem={renderItem}
+          ListFooterComponent={columnIndex === 0 ? FeedFooter : undefined}
+          refreshing={isPTRing}
+          onRefresh={onRefresh}
+          headerOffset={headerOffset}
+          progressViewOffset={progressViewOffset}
+          contentContainerStyle={{
+            minHeight: Dimensions.get('window').height * 1.5,
+          }}
+          onScrolledDownChange={
+            columnIndex === 0 ? onScrolledDownChange : undefined
+          }
+          onEndReached={onEndReached}
+          onEndReachedThreshold={2}
+          removeClippedSubviews={true}
+          extraData={extraData}
+          desktopFixedHeight={
+            desktopFixedHeightOffset ? desktopFixedHeightOffset : true
+          }
+          initialNumToRender={initialNumToRenderOverride ?? initialNumToRender}
+          windowSize={9}
+          maxToRenderPerBatch={IS_IOS ? 5 : 1}
+          updateCellsBatchingPeriod={40}
+          onItemSeen={onItemSeen}
+          onItemSeenWhen="exit"
+        />
+      </View>
+    )
+
+    return (
+      <View testID={testID} style={[style, styles.masonryContainer]}>
+        {columnItems.columns.map((colItems, index) =>
+          renderColumn(colItems, index),
+        )}
+      </View>
+    )
+  }
+
   return (
     <View testID={testID} style={style}>
       <List
@@ -1123,6 +1223,14 @@ export {PostFeed}
 
 const styles = StyleSheet.create({
   feedFooter: {paddingTop: 20},
+  masonryContainer: {
+    flexDirection: 'row',
+    flex: 1,
+    gap: 12,
+  },
+  masonryColumn: {
+    flex: 1,
+  },
 })
 
 export function isThreadParentAt<T>(arr: Array<T>, i: number) {
